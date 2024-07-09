@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import axios from "axios";
-import * as cheerio from "cheerio";
+const cheerio = require("cheerio");
 
 export async function scrapeAndExtractShopifyShop(
     url: string,

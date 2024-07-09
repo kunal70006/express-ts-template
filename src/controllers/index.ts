@@ -41,22 +41,30 @@ export const productDetails = async (
 ): Promise<void> => {
     const { productTitle, val, url } = await checkURLAndProductTitle(req, res);
     if (val && productTitle) {
-        const data = await shopifyApiGetProductDetails({
+        shopifyApiGetProductDetails({
             productTitle,
             subdomain: val,
             isCollection: false,
             url: url,
-        });
+        })
+            .then(data => {
+                res.status(200).json({ ...data });
+                return;
+            })
+            .catch(err => {
+                scrapeWebsite(url)
+                    .then(branding => res.status(200).json({ ...branding }))
+                    .catch(err => res.status(400).json({ error: err.message }));
+                res.status(400).json({ error: err.message });
+                return;
+            });
 
-        if (!data) {
-            const branding = await scrapeWebsite(url);
-            res.status(200).json({ ...branding });
-            return;
-        }
-        res.status(200).json({ ...data });
+        const branding = await scrapeWebsite(url);
+        res.status(200).json({ ...branding });
         return;
     } else {
-        res.status(400).json({ error: "Invalid URL or no data found" });
+        const branding = await scrapeWebsite(url);
+        res.status(200).json({ ...branding });
         return;
     }
 };
