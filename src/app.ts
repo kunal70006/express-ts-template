@@ -6,6 +6,8 @@ import { errorHandler, errorNotFoundHandler } from "./middlewares/errorHandler";
 
 // Routes
 import { index } from "./routes/index";
+require("dotenv").config();
+
 // Create Express server
 export const app = express();
 
