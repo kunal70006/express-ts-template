@@ -6,6 +6,7 @@ import {
     shopifyApiGetProductBrandingDetails,
     shopifyApiGetProductDetails,
 } from "../utils";
+import axios from "axios";
 
 /**
  * GET /
@@ -58,31 +59,41 @@ export const productDetails = async (
             res,
         );
 
+        let data;
+
         if (val && productTitle) {
             try {
-                const data = await shopifyApiGetProductDetails({
+                data = await shopifyApiGetProductDetails({
                     productTitle,
                     subdomain: val,
                     isCollection: false,
                     url: url,
                 });
+
                 if (Object.values(data).every(val => val === "")) {
-                    // If Shopify API fails, fall back to scraping
-                    const branding = await scrapeWebsiteForProductDetails(url);
-                    res.status(200).json({ ...branding });
-                    return;
+                    throw new Error("Empty data from Shopify API");
                 }
-                res.status(200).json({ ...data });
             } catch (err) {
-                // If Shopify API fails, fall back to scraping
-                const branding = await scrapeWebsiteForProductDetails(url);
-                res.status(200).json({ ...branding });
+                console.error("Shopify API failed:", err);
+                data = await scrapeWebsiteForProductDetails(url);
+
+                if (Object.values(data).some(val => val === "")) {
+                    const { data: jsData } = await axios.get(`${url}.js`);
+                    console.log(jsData);
+                    data = {
+                        title: jsData.title,
+                        description: jsData.description,
+                        media: jsData.featured_image,
+                    };
+                }
             }
         } else {
-            const branding = await scrapeWebsiteForProductDetails(url);
-            res.status(200).json({ ...branding });
+            data = await scrapeWebsiteForProductDetails(url);
         }
+
+        res.status(200).json(data);
     } catch (err) {
+        console.error("Error in productDetails:", err);
         res.status(400).json({ error: err.message });
     }
 };
