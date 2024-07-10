@@ -221,23 +221,21 @@ export async function shopifyApiGetProductDetails({
     const details = {
         description: "",
         title: "",
-        media: "",
+        // @ts-ignore
+        media: [],
         fonts: "",
     };
 
     const product = data?.product;
-
     if (product) {
         details.description = product?.description ?? "";
         details.title = product?.title ?? "";
-        details.media = product.url?.url ?? product.url?.alt_text ?? "";
+        details.media = product.image?.url ?? product.image?.alt_text ?? [];
     }
     const scrapedData = await scrapeWebsite(url);
 
     details.fonts = scrapedData.fonts.join(", ");
-    if (details.media === "") {
-        details.media = scrapedData.images[0];
-    }
+
     return details;
 }
 
