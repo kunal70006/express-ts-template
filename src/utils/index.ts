@@ -129,9 +129,14 @@ export async function checkURLAndProductTitle(req: Request, res: Response) {
         res.status(400).json({ error: "Missing URL query parameter" });
         return;
     }
-    const productTitle = url.match(/products\/([^\/]+)/)?.[1] ?? null;
+    let productTitle = "";
+    productTitle = url.match(/products\/([^\/]+)/)?.[1];
+    const isCollection = url.includes("/collections/");
+    if (isCollection) {
+        productTitle = url.match(/collections\/([^\/]+)/)?.[1];
+    }
     const val = await scrapeAndExtractShopifyShop(url);
-    return { productTitle, val, url };
+    return { productTitle, val, url, isCollection };
 }
 
 export async function scrapeWebsiteForProductDetails(url: string) {
@@ -161,8 +166,11 @@ export async function scrapeWebsiteForProductDetails(url: string) {
         description: cleanText($(".product__description").text()),
         title: cleanText($(".product__title").text()),
         media: extractSrc($(".product__media")),
-        header: cleanText($(".header__heading").html() || ""),
+        fonts: "",
     };
+
+    const scrapedData = await scrapeWebsite(url);
+    details.fonts = scrapedData.fonts.join(", ");
 
     return details;
 }
@@ -176,13 +184,27 @@ export async function shopifyApi({
     productTitle: string;
     isCollection: boolean;
 }) {
-    const { data } = await axios.get(
-        `${process.env.API_ENDPOINT}subdomain=${subdomain}&product_title=${productTitle}&is_collection=${isCollection}`,
-    );
-
-    return data;
+    try {
+        const { data } = await axios.get(
+            `${process.env.API_ENDPOINT}subdomain=${subdomain}&product_title=${productTitle}&is_collection=${isCollection}`,
+        );
+        return data;
+    } catch (error) {
+        // If error is an AxiosError, we can access more specific error information
+        if (axios.isAxiosError(error)) {
+            console.error("Axios error:", error.message);
+            console.error("Status:", error.response?.status);
+            console.error("Data:", error.response?.data);
+            throw new Error(`Shopify API request failed: ${error.message}`);
+        } else {
+            // For non-Axios errors
+            console.error("Non-Axios error:", error);
+            throw new Error(
+                "An unexpected error occurred while fetching data from Shopify API",
+            );
+        }
+    }
 }
-
 export async function shopifyApiGetProductDetails({
     subdomain,
     productTitle,
@@ -202,14 +224,53 @@ export async function shopifyApiGetProductDetails({
         media: "",
         fonts: "",
     };
+
     const product = data?.product;
+
     if (product) {
         details.description = product?.description ?? "";
         details.title = product?.title ?? "";
         details.media = product.url?.url ?? product.url?.alt_text ?? "";
     }
     const scrapedData = await scrapeWebsite(url);
-    details.fonts = scrapedData.fonts.join(", ");
 
+    details.fonts = scrapedData.fonts.join(", ");
+    if (details.media === "") {
+        details.media = scrapedData.images[0];
+    }
+    return details;
+}
+
+export async function shopifyApiGetProductBrandingDetails({
+    subdomain,
+    productTitle,
+    isCollection,
+    url,
+}: {
+    subdomain: string;
+    productTitle: string;
+    isCollection: boolean;
+    url: string;
+}) {
+    const data = await shopifyApi({ subdomain, productTitle, isCollection });
+
+    const details = {
+        address: { ...data?.brand?.company },
+        productReccomendations: data?.product_recommendations?.map(
+            (product: any) => {
+                return {
+                    title: product?.title ?? "",
+                    description: product?.description ?? "",
+                    media:
+                        product?.image?.url ?? product?.image?.alt_text ?? "",
+                };
+            },
+        ),
+        // @ts-ignore
+        colors: [],
+    };
+
+    const scrapedData = await scrapeWebsite(url);
+    details.colors = scrapedData.colors;
     return details;
 }
