@@ -167,6 +167,9 @@ export async function scrapeWebsiteForProductDetails(url: string) {
     };
 
     const scrapedData = await scrapeWebsite(url);
+    if (details.media === "") {
+        details.media = scrapedData.images[0];
+    }
     details.fonts = scrapedData.fonts.join(", ");
 
     return details;
@@ -229,9 +232,19 @@ export async function shopifyApiGetProductDetails({
         details.title = product?.title ?? "";
         details.media = product.image?.url ?? product.image?.alt_text ?? [];
     }
-    const scrapedData = await scrapeWebsite(url);
+    const scrapedData = await scrapeWebsiteForProductDetails(url);
 
-    details.fonts = scrapedData.fonts.join(", ");
+    if (details.media.length === 0) {
+        details.media = [scrapedData.media];
+    }
+    if (details.title === "") {
+        details.title = scrapedData.title;
+    }
+    if (details.description === "") {
+        details.description = scrapedData.description;
+    }
+    const d = await scrapeWebsite(url);
+    details.fonts = d.fonts.join(", ");
 
     return details;
 }
