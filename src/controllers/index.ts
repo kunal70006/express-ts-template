@@ -20,8 +20,10 @@ export const productBranding = async (
     res: Response,
 ): Promise<void> => {
     try {
-        const { productTitle, val, url, isCollection } =
-            await checkURLAndProductTitle(req, res);
+        const { productTitle, val, url } = await checkURLAndProductTitle(
+            req,
+            res,
+        );
 
         if (val && productTitle) {
             try {
@@ -51,8 +53,10 @@ export const productDetails = async (
     res: Response,
 ): Promise<void> => {
     try {
-        const { productTitle, val, url, isCollection } =
-            await checkURLAndProductTitle(req, res);
+        const { productTitle, val, url } = await checkURLAndProductTitle(
+            req,
+            res,
+        );
 
         if (val && productTitle) {
             try {
