@@ -266,9 +266,12 @@ export async function shopifyApiGetProductBrandingDetails({
         ),
         // @ts-ignore
         colors: [],
+        logo: "",
     };
 
     const scrapedData = await scrapeWebsite(url);
+
     details.colors = scrapedData.colors;
+    details.logo = scrapedData.images[0];
     return details;
 }

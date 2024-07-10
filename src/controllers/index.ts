@@ -28,7 +28,7 @@ export const productBranding = async (
                 const data = await shopifyApiGetProductBrandingDetails({
                     productTitle,
                     subdomain: val,
-                    isCollection,
+                    isCollection: false,
                     url: url,
                 });
                 res.status(200).json({ ...data });
@@ -59,7 +59,7 @@ export const productDetails = async (
                 const data = await shopifyApiGetProductDetails({
                     productTitle,
                     subdomain: val,
-                    isCollection,
+                    isCollection: false,
                     url: url,
                 });
                 res.status(200).json({ ...data });
