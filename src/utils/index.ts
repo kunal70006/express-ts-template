@@ -131,7 +131,9 @@ export async function checkURLAndProductTitle(req: Request, res: Response) {
     }
     let productTitle = "";
     productTitle = url.match(/products\/([^\/]+)/)?.[1];
-    const isCollection = url.includes("/collections/");
+
+    const isCollection =
+        url.includes("/collections/") && !url.includes("/products/");
     if (isCollection) {
         productTitle = url.match(/collections\/([^\/]+)/)?.[1];
     }

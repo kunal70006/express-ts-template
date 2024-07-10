@@ -62,6 +62,12 @@ export const productDetails = async (
                     isCollection: false,
                     url: url,
                 });
+                if (Object.values(data).every(val => val === "")) {
+                    // If Shopify API fails, fall back to scraping
+                    const branding = await scrapeWebsiteForProductDetails(url);
+                    res.status(200).json({ ...branding });
+                    return;
+                }
                 res.status(200).json({ ...data });
             } catch (err) {
                 // If Shopify API fails, fall back to scraping
