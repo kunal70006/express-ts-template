@@ -10,15 +10,22 @@ import {
 } from "../utils";
 import axios from "axios";
 
-export interface ProductOrCollectionDetails {
+export interface ProductDetails {
     title: string;
     description: string;
     image: string;
-    productRecommendations: Omit<
-        ProductOrCollectionDetails,
-        "productRecommendations"
-    >[];
-    font: string;
+    productRecommendations: Omit<ProductDetails, "productRecommendations">[];
+}
+
+interface ProductInCollection
+    extends Omit<ProductDetails, "productRecommendations"> {
+    url: string;
+}
+
+export interface CollectionDetails {
+    title: string;
+    collectionImage: string;
+    products: ProductInCollection[];
 }
 
 export const getProductOrCollectionDetails = async (
@@ -29,7 +36,8 @@ export const getProductOrCollectionDetails = async (
     const isCollectionRegex = /\/collections\/(?!.*\/products\/)/;
     const isCollection = isCollectionRegex.test(url);
     if (isCollection) {
-        // return getCollectionDetails(url);
+        const data = await getCollectionDetails(url);
+        return res.status(200).json(data);
     }
     const data = await getProductDetails(url);
     return res.status(200).json(data);
